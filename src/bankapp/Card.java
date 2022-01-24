@@ -12,17 +12,15 @@ public class Card {
     // PIN
     private final String PIN;
     private List<String> cardNumbersRepository = repositoryFiller();
-    private static HashMap<String, String> issuedCards = new HashMap<>();
 
     public Card(SQLiteDB base) {
-        // The format String %04d is for 0 filled 4 digits
+        // Generate random PIN
         Random r = new Random();
         this.PIN = String.format("%04d", r.nextInt(10000));
+        this. cardNumbersRepository = repositoryFiller(base);
         this.cardNumber = cardNumbersRepository.get(0);
         SQLiteDB.insert(base.getBaseName(), this.cardNumber, this.PIN);
-        issuedCards.put(this.cardNumber, this.PIN);
         cardNumbersRepository.remove(0);
-
     }
 
     //Getter
@@ -30,7 +28,7 @@ public class Card {
     public String getPIN() {return this.PIN;}
 
     //Generate random Accounts
-    private List <String> repositoryFiller() {
+    private List <String> repositoryFiller(SQLiteDB base) {
         List<String> repository = new ArrayList<>();
         int numberOfAccounts = 50;
         while (repository.size() < numberOfAccounts) {
@@ -39,8 +37,11 @@ public class Card {
             while (ai.length() < 9) {
                 ai.insert(0, "0");
             }
-            // check if already in DB
-            repository.add(this.BIN + ai + generateCheckSum(String.valueOf(ai)));
+            String combinedNumber = this.BIN + ai + generateCheckSum(String.valueOf(ai));
+            // check if number already exists
+            if(SQLiteDB.checkExistence(base.getBaseName(), combinedNumber) != 1) {
+                repository.add(combinedNumber);
+            }
         }
         Collections.shuffle(repository);
         return repository;
